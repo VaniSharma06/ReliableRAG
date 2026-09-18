@@ -1,0 +1,68 @@
+{
+    "summary": {
+        "total_questions": 4,
+        "average_retrieval_score": 0.145,
+        "average_context_relevance": 0.1,
+        "average_faithfulness": 0.0,
+        "average_answer_correctness": 0.083,
+        "average_latency_seconds": 19.19
+    },
+    "tests": [
+        {
+            "question": "What is ReliableRAG?",
+            "expected_answer": "ReliableRAG is an evaluation-driven retrieval augmented generation system.",
+            "generated_answer": "I cannot determine the answer from the provided documents.",
+            "evaluation": {
+                "retrieval_score": 0.25,
+                "context_relevance": 0.0,
+                "faithfulness": 0.0,
+                "answer_correctness": 0.0,
+                "answer_generated": true,
+                "source_count": 3,
+                "latency_seconds": 26.82
+            }
+        },
+        {
+            "question": "What does Retrieval-Augmented Generation combine?",
+            "expected_answer": "Retrieval-Augmented Generation combines document retrieval with large language models.",
+            "generated_answer": "I cannot determine the answer from the provided documents.",
+            "evaluation": {
+                "retrieval_score": 0.33,
+                "context_relevance": 0.0,
+                "faithfulness": 0.0,
+                "answer_correctness": 0.33,
+                "answer_generated": true,
+                "source_count": 3,
+                "latency_seconds": 26.836
+            }
+        },
+        {
+            "question": "What happens before an answer is generated?",
+            "expected_answer": "The system retrieves relevant context before generating an answer.",
+            "generated_answer": "I cannot determine the answer from the provided documents.",
+            "evaluation": {
+                "retrieval_score": 0.0,
+                "context_relevance": 0.2,
+                "faithfulness": 0.0,
+                "answer_correctness": 0.0,
+                "answer_generated": true,
+                "source_count": 3,
+                "latency_seconds": 20.058
+            }
+        },
+        {
+            "question": "What evaluation metrics can ReliableRAG use?",
+            "expected_answer": "Evaluation metrics can include faithfulness, relevance, retrieval accuracy, and response latency.",
+            "generated_answer": "I cannot determine the answer from the provided documents.",
+            "evaluation": {
+                "retrieval_score": 0.0,
+                "context_relevance": 0.2,
+                "faithfulness": 0.0,
+                "answer_correctness": 0.0,
+                "answer_generated": true,
+                "source_count": 3,
+                "latency_seconds": 3.045
+            }
+        }
+    ]
+}
