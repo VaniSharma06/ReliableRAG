@@ -2,177 +2,318 @@
 
 ### Evaluation-Driven Retrieval-Augmented Generation System
 
-ReliableRAG is a locally deployable Retrieval-Augmented Generation (RAG) system designed to combine semantic document retrieval with large-language-model generation while measuring retrieval quality, contextual relevance, faithfulness, answer correctness, and response latency.
+ReliableRAG is a production-oriented Retrieval-Augmented Generation (RAG) system designed to answer questions from user-provided documents while measuring retrieval quality, context relevance, faithfulness, answer correctness, and response latency.
 
-The system transforms unstructured PDF documents into searchable vector representations, retrieves relevant evidence for a user query, and generates grounded responses using a locally hosted LLM.
+Instead of treating a RAG application as simply:
+
+> PDF → LLM → Answer
+
+ReliableRAG treats **evaluation as a first-class component of the architecture**.
+
+The system combines semantic retrieval, persistent vector storage, local LLM inference, document-grounded generation, source transparency, and automated benchmarking into one end-to-end pipeline.
 
 ---
 
-## Overview
+## Project Overview
 
-Traditional LLM applications can generate fluent answers without having access to domain-specific documents.
+Large Language Models can generate fluent answers but may produce information that is unsupported by the provided documents.
 
-ReliableRAG addresses this limitation by introducing a retrieval layer between the user query and the language model:
+ReliableRAG addresses this problem by introducing an evaluation layer around the complete retrieval and generation pipeline.
+
+### Core Pipeline
 
 ```text
-User Query
-    │
-    ▼
-Query Embedding
-    │
-    ▼
-Semantic Retrieval
-    │
-    ▼
-Relevant Document Chunks
-    │
-    ▼
-Context Construction
-    │
-    ▼
-Local LLM — Llama 3.2
-    │
-    ▼
-Grounded Answer
-    │
-    ▼
-Evaluation Pipeline
+                         RELIABLERAG ARCHITECTURE
 
+ ┌─────────────────┐
+ │   PDF Document  │
+ └────────┬────────┘
+          │
+          ▼
+ ┌─────────────────┐
+ │ Text Extraction │
+ │     PyPDF       │
+ └────────┬────────┘
+          │
+          ▼
+ ┌─────────────────┐
+ │    Chunking     │
+ │ 1000 / 200 chars│
+ │     overlap     │
+ └────────┬────────┘
+          │
+          ▼
+ ┌──────────────────────────┐
+ │ Semantic Embedding Model │
+ │  all-MiniLM-L6-v2        │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │       ChromaDB           │
+ │ Persistent Vector Store  │
+ └────────────┬─────────────┘
+              │
+              │
+        User Question
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Semantic Retrieval       │
+ │       Top-K = 3          │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Retrieved Context        │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Local LLM Inference      │
+ │ Ollama / Llama 3.2 3B    │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Grounded Answer          │
+ │ + Retrieved Sources      │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────┐
+ │          Evaluation Layer           │
+ │                                     │
+ │ Retrieval Score                     │
+ │ Context Relevance                   │
+ │ Faithfulness                        │
+ │ Answer Correctness                  │
+ │ Response Latency                    │
+ └─────────────────────────────────────┘
 
+# ReliableRAG
+
+### Evaluation-Driven Retrieval-Augmented Generation System
+
+ReliableRAG is a production-oriented Retrieval-Augmented Generation (RAG) system designed to answer questions from user-provided documents while measuring retrieval quality, context relevance, faithfulness, answer correctness, and response latency.
+
+Instead of treating a RAG application as simply:
+
+> PDF → LLM → Answer
+
+ReliableRAG treats **evaluation as a first-class component of the architecture**.
+
+The system combines semantic retrieval, persistent vector storage, local LLM inference, document-grounded generation, source transparency, and automated benchmarking into one end-to-end pipeline.
+
+---
+
+## Project Overview
+
+Large Language Models can generate fluent answers but may produce information that is unsupported by the provided documents.
+
+ReliableRAG addresses this problem by introducing an evaluation layer around the complete retrieval and generation pipeline.
+
+### Core Pipeline
+
+```text
+                         RELIABLERAG ARCHITECTURE
+
+ ┌─────────────────┐
+ │   PDF Document  │
+ └────────┬────────┘
+          │
+          ▼
+ ┌─────────────────┐
+ │ Text Extraction │
+ │     PyPDF       │
+ └────────┬────────┘
+          │
+          ▼
+ ┌─────────────────┐
+ │    Chunking     │
+ │ 1000 / 200 chars│
+ │     overlap     │
+ └────────┬────────┘
+          │
+          ▼
+ ┌──────────────────────────┐
+ │ Semantic Embedding Model │
+ │  all-MiniLM-L6-v2        │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │       ChromaDB           │
+ │ Persistent Vector Store  │
+ └────────────┬─────────────┘
+              │
+              │
+        User Question
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Semantic Retrieval       │
+ │       Top-K = 3          │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Retrieved Context        │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Local LLM Inference      │
+ │ Ollama / Llama 3.2 3B    │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌──────────────────────────┐
+ │ Grounded Answer          │
+ │ + Retrieved Sources      │
+ └────────────┬─────────────┘
+              │
+              ▼
+ ┌─────────────────────────────────────┐
+ │          Evaluation Layer           │
+ │                                     │
+ │ Retrieval Score                     │
+ │ Context Relevance                   │
+ │ Faithfulness                        │
+ │ Answer Correctness                  │
+ │ Response Latency                    │
+ └─────────────────────────────────────┘
+
+Why ReliableRAG?
+
+A basic RAG application can retrieve documents and generate an answer.
+
+ReliableRAG goes one step further by asking:
+
+Did the retriever find the relevant information?
+Was the retrieved context relevant to the question?
+Was the generated answer supported by the retrieved context?
+Did the answer contain the expected information?
+How long did the system take?
+Can the system be benchmarked repeatedly?
+
+This transforms the project from a simple chatbot into an evaluation-driven AI system.
 
 Key Features
-
-
-PDF document ingestion and text extraction
-Configurable text chunking with overlap
-Semantic embeddings using Sentence Transformers
-Persistent vector storage with ChromaDB
-Top-k semantic document retrieval
-Local LLM inference using Ollama and Llama 3.2
-Context-grounded response generation
-Retrieved evidence/source display
-Automated evaluation benchmark
-Retrieval quality measurement
-Context relevance measurement
-Faithfulness measurement
-Answer correctness measurement
-Response latency measurement
-Interactive Streamlit interface
-FastAPI backend architecture
-
-System Architecture
-
-                         ┌─────────────────────┐
-                         │      PDF Input      │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │   Text Extraction   │
-                         │       PyPDF         │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │  Text Chunking      │
-                         │  Size + Overlap     │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │     Embeddings      │
-                         │ all-MiniLM-L6-v2    │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │     ChromaDB        │
-                         │   Vector Storage    │
-                         └──────────┬──────────┘
-                                    │
-                         User Query │
-                                    ▼
-                         ┌─────────────────────┐
-                         │ Semantic Retrieval  │
-                         │       Top-K          │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │ Context Construction│
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │ Ollama / Llama 3.2  │
-                         │    Local Inference  │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │ Grounded Response   │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │ Evaluation Pipeline │
-                         └─────────────────────┘
-Technology Stack
-
-Layer	Technology
-Language	Python 3.11
-Backend	FastAPI
-Frontend	Streamlit
-Document Processing	PyPDF
-Embeddings	Sentence Transformers
-Vector Database	ChromaDB
-LLM Runtime	Ollama
-LLM	Llama 3.2
-Data Validation	Pydantic
-Testing	Python tests
-Evaluation	Custom evaluation pipeline
-
-How It Works
-
 1. Document Ingestion
 
-PDF files are uploaded through the application.
+Supports PDF documents through:
 
-The ingestion pipeline extracts readable text using PyPDF.
+PyPDF
+Text extraction
+Validation
+Automatic chunk generation
+2. Configurable Text Chunking
 
-2. Text Chunking
+Documents are divided into overlapping chunks.
 
-Extracted text is divided into overlapping chunks.
+Current configuration:
+
+Chunk size  = 1000 characters
+Overlap     = 200 characters
 
 The overlap helps preserve contextual continuity between neighboring chunks.
 
-3. Semantic Embeddings
+3. Semantic Retrieval
 
-Each chunk is converted into a vector representation using:
+ReliableRAG uses:
 
+Sentence Transformers
 all-MiniLM-L6-v2
 
-These embeddings allow the system to retrieve semantically related content rather than relying only on exact keyword matches.
+to convert document chunks and queries into vector representations.
 
-4. Vector Storage
+This enables semantic similarity-based retrieval rather than relying only on exact keyword matching.
 
-Embeddings and their corresponding document chunks are stored in ChromaDB.
+4. Persistent Vector Database
 
-5. Retrieval
+Retrieved document chunks are stored using:
 
-When a user submits a question, the query is embedded and compared against stored document vectors.
+ChromaDB
 
-The system retrieves the top relevant chunks.
+with persistent local storage.
 
-6. Context-Grounded Generation
+This allows the application to reuse indexed documents without rebuilding the entire vector database every time.
 
-The retrieved chunks are supplied to Llama 3.2 through Ollama.
+5. Local LLM Inference
 
-The generation prompt instructs the model to use the provided document context and avoid unsupported answers.
+The project uses:
 
-7. Evaluation
+Ollama
+Llama 3.2 3B
 
-The evaluation pipeline runs predefined benchmark questions and records:
+for local answer generation.
+
+This design provides:
+
+Local inference
+No dependency on paid LLM APIs
+Reduced external data exposure
+Reproducible development environment
+6. Grounded Answer Generation
+
+The LLM receives the retrieved context together with the user's question.
+
+The prompt explicitly instructs the model to:
+
+Use ONLY the provided context.
+
+If the information cannot be found, the system is instructed not to invent an answer.
+
+7. Source Transparency
+
+Every query returns the retrieved source chunks used to construct the answer.
+
+This makes the retrieval process inspectable instead of treating the LLM output as a black box.
+
+Evaluation Framework
+
+One of the main engineering goals of ReliableRAG is to evaluate the system rather than simply demonstrate that it works.
+
+The project contains a benchmark dataset and automated evaluation pipeline.
+
+Current evaluation dimensions:
+
+Metric	Purpose
+Retrieval Score	Measures whether expected information was retrieved
+Context Relevance	Measures lexical relevance between question and retrieved context
+Faithfulness	Estimates how much of the answer is supported by retrieved context
+Answer Correctness	Measures expected keyword coverage in generated answers
+Response Latency	Measures end-to-end response generation time
+Source Count	Number of retrieved chunks used for generation
+Benchmark Dataset
+
+The evaluation suite contains 4 benchmark questions covering:
+
+System definition
+RAG fundamentals
+Retrieval workflow
+Evaluation metrics
+
+Example benchmark question:
+
+What is ReliableRAG?
+
+Expected concept:
+
+ReliableRAG is an evaluation-driven retrieval augmented
+generation system.
+Actual Evaluation Results
+
+The project includes an automatically generated evaluation report:
+
+evaluation/results/evaluation_results.json
+
+The benchmark was executed using:
+
+python -m evaluation.run_evaluation
+
+The evaluation pipeline records:
 
 Retrieval Score
 Context Relevance
@@ -180,22 +321,114 @@ Faithfulness
 Answer Correctness
 Response Latency
 
-Results are stored as structured JSON for reproducibility.
+The results are displayed in the Streamlit dashboard under:
 
-Evaluation Framework
+Quality Benchmark
+Example Result Structure
+{
+  "question": "What is ReliableRAG?",
+  "evaluation": {
+    "retrieval_score": 1.0,
+    "context_relevance": 0.75,
+    "faithfulness": 0.89,
+    "answer_correctness": 1.0,
+    "source_count": 3
+  }
+}
 
-ReliableRAG includes a lightweight automated evaluation framework.
+The exact aggregate values are generated from the local benchmark run and are stored in evaluation/results/evaluation_results.json. This avoids hard-coding benchmark numbers into the documentation.
 
-Metrics
-Metric	Purpose
-Retrieval Score	Measures whether expected information appears in retrieved context
-Context Relevance	Measures lexical overlap between query terms and retrieved context
-Faithfulness	Estimates how much generated-answer vocabulary is supported by retrieved context
-Answer Correctness	Measures presence of expected benchmark keywords in the generated answer
-Latency	Measures end-to-end retrieval and generation time
+Engineering Decisions
 
-Note: The current evaluation implementation uses lightweight lexical metrics. It is intended as a reproducible project benchmark rather than a research-grade semantic evaluation framework.
+ReliableRAG was designed around several deliberate engineering decisions.
 
+Decision 1 — Local LLM Instead of Paid API
+Chosen
+Ollama + Llama 3.2 3B
+Reason
+
+The project should remain usable without requiring a paid API key or external inference service.
+
+Result
+
+The complete RAG pipeline can run locally.
+
+Decision 2 — Semantic Retrieval Instead of Keyword Search
+Chosen
+Sentence Transformers
+all-MiniLM-L6-v2
+Reason
+
+Questions and relevant passages may use different wording.
+
+Semantic embeddings allow retrieval based on meaning rather than exact word matching.
+
+Decision 3 — Persistent Vector Storage
+Chosen
+ChromaDB PersistentClient
+Reason
+
+The indexed representation should survive application restarts.
+
+This also separates the ingestion/indexing stage from repeated query execution.
+
+Decision 4 — Top-K Retrieval
+Chosen
+Top K = 3
+Reason
+
+Returning a small number of highly relevant chunks keeps the LLM context focused while limiting unnecessary context.
+
+This parameter can be changed as part of future retrieval experiments.
+
+Decision 5 — Evaluation as a Separate Module
+
+Evaluation logic is isolated under:
+
+evaluation/
+
+rather than being tightly coupled to the API.
+
+This makes it easier to:
+
+Add new metrics
+Run repeatable benchmarks
+Compare system configurations
+Track future improvements
+System Architecture
+                 ┌───────────────────────┐
+                 │      Streamlit UI     │
+                 └───────────┬───────────┘
+                             │
+                             ▼
+                    ┌────────────────┐
+                    │   FastAPI API  │
+                    └───────┬────────┘
+                            │
+             ┌──────────────┼──────────────┐
+             │              │              │
+             ▼              ▼              ▼
+        Ingestion       Retrieval       Evaluation
+             │              │              │
+             ▼              ▼              ▼
+          PyPDF         ChromaDB       Metrics Engine
+             │              │              │
+             ▼              ▼              │
+        Chunking       Sentence           │
+                         Transformer      │
+                            │              │
+                            ▼              │
+                         Context          │
+                            │              │
+                            ▼              │
+                     Ollama / Llama       │
+                            │              │
+                            ▼              │
+                         Answer           │
+                            │              │
+                            └──────┬───────┘
+                                   ▼
+                           Benchmark Results
 Project Structure
 ReliableRAG/
 │
@@ -207,7 +440,8 @@ ReliableRAG/
 │   └── test_vector_store.py
 │
 ├── data/
-│   └── test_document.pdf
+│   ├── test_document.pdf
+│   └── uploads/
 │
 ├── evaluation/
 │   ├── dataset.py
@@ -216,118 +450,315 @@ ReliableRAG/
 │   └── results/
 │       └── evaluation_results.json
 │
-├── tests/
-│
-├── frontend.py
 ├── main.py
+├── frontend.py
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-Installation
-1. Clone the repository
+Technology Stack
+Backend
+Python 3.11
+FastAPI
+Pydantic
+Uvicorn
+AI / ML
+Sentence Transformers
+all-MiniLM-L6-v2
+Ollama
+Llama 3.2 3B
+Retrieval
+ChromaDB
+Vector embeddings
+Top-K semantic retrieval
+Document Processing
+PyPDF
+Frontend
+Streamlit
+Evaluation
+Python evaluation framework
+Retrieval scoring
+Context relevance
+Faithfulness
+Answer correctness
+Response latency
+API Design
+Health / Root Endpoint
+GET /
+
+Returns system information and application status.
+
+Upload Document
+POST /upload
+
+Accepts:
+
+PDF
+
+Processing flow:
+
+PDF
+ ↓
+Text Extraction
+ ↓
+Chunking
+ ↓
+Embedding Generation
+ ↓
+ChromaDB
+Query
+POST /query
+
+Example request:
+
+{
+  "question": "What is Retrieval-Augmented Generation?"
+}
+
+The system:
+
+Question
+ ↓
+Embedding
+ ↓
+Semantic Search
+ ↓
+Top-3 Chunks
+ ↓
+Context Construction
+ ↓
+Llama 3.2
+ ↓
+Answer + Sources
+Running the Project Locally
+1. Clone Repository
 git clone https://github.com/VaniSharma06/ReliableRAG.git
 cd ReliableRAG
-2. Create a virtual environment
+2. Create Virtual Environment
 python -m venv .venv
-3. Activate the environment
-
-Windows PowerShell:
-
-.venv\Scripts\Activate.ps1
-4. Install dependencies
+Windows
+.venv\Scripts\activate
+3. Install Dependencies
 pip install -r requirements.txt
-5. Install Ollama
+4. Install Ollama
 
-Install Ollama and make sure the required model is available:
+Install Ollama and pull the required model:
 
 ollama pull llama3.2:3b
-Running the Application
-Start the FastAPI backend
+
+Verify:
+
+ollama list
+5. Start Backend
 uvicorn main:app --reload
 
-The API will be available locally at:
+The FastAPI service will be available locally.
 
-http://127.0.0.1:8000
-Start the Streamlit frontend
+6. Start Frontend
 
-Open another terminal:
+In another terminal:
 
 streamlit run frontend.py
-
-The interactive application will open in your browser.
-
 Running the Evaluation
 
-From the project root:
+Run:
 
 python -m evaluation.run_evaluation
 
 The benchmark results are saved to:
 
 evaluation/results/evaluation_results.json
-Example Evaluation Questions
 
-The included benchmark evaluates questions such as:
+The Streamlit dashboard reads the generated results and displays them in the:
 
-What is ReliableRAG?
+Quality Benchmark
 
-What does Retrieval-Augmented Generation combine?
+section.
 
-What happens before an answer is generated?
+Example Workflow
+Step 1 — Upload
 
-What evaluation metrics can ReliableRAG use?
-Engineering Highlights
-Local-first LLM Architecture
+Upload a PDF through the application.
 
-The project uses Ollama for local LLM inference, avoiding dependency on a paid hosted inference API for the core generation pipeline.
+Step 2 — Index
 
-Retrieval-Grounded Generation
+ReliableRAG extracts and chunks the document.
 
-Instead of directly prompting an LLM with a question, ReliableRAG first retrieves relevant evidence and incorporates it into the generation context.
+Step 3 — Embed
 
-Reproducible Evaluation
+Each chunk is converted into a semantic vector.
 
-Benchmark questions and expected keywords are maintained as structured evaluation data, allowing the system to be evaluated repeatedly after implementation changes.
+Step 4 — Store
 
-Separation of Concerns
+Vectors are persisted in ChromaDB.
 
-The project separates:
+Step 5 — Query
 
-ingestion
-vector storage
-generation
-evaluation
-API
-frontend
+The user asks a natural-language question.
 
-This makes individual components easier to test and modify.
+Step 6 — Retrieve
 
+The system retrieves the top 3 semantically relevant chunks.
+
+Step 7 — Generate
+
+Llama 3.2 generates an answer using the retrieved context.
+
+Step 8 — Evaluate
+
+The answer and retrieval pipeline can be evaluated against the benchmark dataset.
+
+Reliability-Oriented Design
+
+ReliableRAG focuses on reducing unsupported generation by constraining the model's information source.
+
+The generation prompt follows this principle:
+
+Retrieved Context
+        ↓
+       LLM
+        ↓
+Grounded Answer
+
+rather than:
+
+User Question
+        ↓
+LLM's General Knowledge
+        ↓
+Potentially Unsupported Answer
+
+The evaluation framework then provides measurable signals for improving the retrieval and generation pipeline.
+
+Testing
+
+The repository includes tests for core components:
+
+app/test_ingestion.py
+app/test_vector_store.py
+
+These tests help validate:
+
+PDF ingestion
+Text chunking
+Vector-store behavior
+Retrieval functionality
 Current Limitations
-Current evaluation metrics are primarily lexical rather than semantic.
-PDF extraction quality depends on the document structure.
-The local Llama 3.2 model has smaller capacity than larger hosted models.
-Retrieval quality depends on chunking and embedding configuration.
-The current prototype is optimized for local experimentation rather than distributed production deployment.
+
+ReliableRAG is intentionally transparent about its current limitations.
+
+1. Lightweight Evaluation
+
+The current evaluation metrics are primarily lexical/heuristic rather than full semantic judge-based evaluation.
+
+2. Small Benchmark
+
+The current benchmark contains 4 questions and is intended as a reproducible demonstration dataset.
+
+3. Local LLM Size
+
+Llama 3.2 3B provides lightweight local inference, but larger models may produce different quality/latency trade-offs.
+
+4. Retrieval Strategy
+
+The current system uses dense semantic retrieval without a dedicated reranking stage.
+
+5. Document Scope
+
+The current ingestion pipeline focuses on text-based PDFs.
+
 Future Improvements
 
-Potential extensions include:
+Potential engineering extensions include:
 
-Hybrid keyword + vector retrieval
-Reranking models
-Semantic evaluation metrics
-Automated hallucination detection
-Citation-aware generation
-Document metadata filtering
-Multi-document retrieval
-Retrieval caching
+Cross-encoder reranking
+Hybrid BM25 + dense retrieval
+Larger evaluation datasets
+Semantic answer evaluation
+LLM-as-a-judge evaluation
+RAGAS-style evaluation
+Retrieval precision / recall measurement
+Query latency monitoring
 Experiment tracking
-Production deployment
-Automated CI/CD evaluation
+Multi-document metadata filtering
+Streaming LLM responses
+Authentication and user isolation
+Docker deployment
+CI/CD pipeline
+Automated regression testing
+Evaluation dashboards
+Retrieval configuration experiments
+What This Project Demonstrates
+
+ReliableRAG demonstrates practical experience with:
+
+Python
+│
+├── Backend API Development
+├── REST API Design
+├── Document Processing
+├── NLP
+├── Embeddings
+├── Vector Databases
+├── Semantic Search
+├── Retrieval-Augmented Generation
+├── Local LLM Inference
+├── Evaluation Engineering
+├── Automated Benchmarking
+├── Testing
+└── Full-Stack AI Application Development
+
+More importantly, the project demonstrates an engineering workflow of:
+
+Build
+  ↓
+Measure
+  ↓
+Inspect
+  ↓
+Evaluate
+  ↓
+Identify Limitations
+  ↓
+Improve
+Resume-Ready Project Summary
+ReliableRAG — Evaluation-Driven RAG System
+
+Built an end-to-end Retrieval-Augmented Generation system using Python, FastAPI, ChromaDB, Sentence Transformers, Ollama and Llama 3.2, implementing PDF ingestion, overlapping text chunking, semantic vector retrieval and context-grounded response generation.
+
+Developed an automated evaluation pipeline measuring retrieval quality, context relevance, faithfulness, answer correctness and response latency across a reproducible benchmark dataset.
+
+Designed a Streamlit monitoring interface exposing retrieved sources, system pipeline stages and benchmark results, with persistent vector storage and local LLM inference for reproducible, API-independent experimentation.
+
 Author
 
 Vani Sharma
 
 Computer Science & Engineering
 
+LNCT, Bhopal
+
 GitHub:
 https://github.com/VaniSharma06
+
+Project Status
+
+Completed — Core RAG + Evaluation Pipeline
+
+The current implementation provides:
+
+PDF ingestion
+Text chunking
+Semantic embeddings
+Persistent vector storage
+Semantic retrieval
+Local LLM inference
+Grounded generation
+Source transparency
+Automated evaluation
+Benchmark result persistence
+Streamlit visualization
+FastAPI backend
+Automated tests
+License
+
+This project is intended for educational, research and portfolio purposes.
